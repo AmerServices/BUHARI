@@ -1,0 +1,28 @@
+import ClientImage from "@/app/components/ClientImage";
+import { heroContent } from "../../data/blogs";
+
+const HeroSection = () => {
+  return (
+    <section className="relative h-[60vh] bg-black text-white overflow-hidden">
+      <ClientImage
+        src={heroContent.image}
+        alt="Dubai Skyline"
+        fill
+        className="object-cover object-center opacity-30"
+      />
+
+      <div className="absolute inset-0 flex items-center justify-center text-center max-w-7xl mx-auto px-6">
+        <div className="animate-fadeInUp"> {/* Animation added here */}
+          <h1 className="text-4xl lg:text-5xl xl:text-6xl xlg:text-7xl font-bold">
+            {heroContent.title}
+          </h1>
+          <p className="mt-4 text-lg sm:text-2xl">
+            {heroContent.subtitle}
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default HeroSection;

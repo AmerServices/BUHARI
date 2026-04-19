@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: '/private/',
+      disallow: ["/api/", "/_next/", "/admin/"],
     },
     sitemap: 'https://www.amerandtasheel.com/sitemap.xml', // Make sure this matches your actual sitemap URL
   }

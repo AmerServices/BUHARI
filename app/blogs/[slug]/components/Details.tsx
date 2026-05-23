@@ -11,6 +11,7 @@ import { blogs } from '@/app/data/blogs';
 import { client } from '@/sanity/lib/client';
 import imageUrlBuilder from '@sanity/image-url';
 import ClientImage from '@/app/components/ClientImage';
+import Image from 'next/image';
 
 interface BlogDetailsProps {
   blog: BlogPost;
@@ -95,21 +96,47 @@ const RenderContentBlock = ({ block, index }: { block: any, index: number }) => 
           ))}
         </ul>
       );
-    case "customImage":
-  if (!block.image) return null;
+    case "customImage": {
+  // 1. Resolve image source using the exact hero section verification fallback scheme
+  const imageReference = block.image || block.imageUrl;
   
+  if (!imageReference) return null;
+
+  const getCustomImageSrc = () => {
+    if (typeof imageReference === 'string' && imageReference.length > 0) {
+      return imageReference;
+    }
+    
+    try {
+      return urlFor(imageReference).width(800).url();
+    } catch (error) {
+      console.error("Sanity Custom Image Helper Error:", error);
+      return "/placeholder-image.jpg"; // Keep fallback sync identical
+    }
+  };
+
+  const customSrc = getCustomImageSrc();
+  const isExternalCustomImage = typeof customSrc === 'string' && customSrc.startsWith('http');
+
   return (
-    <div key={index} className="my-8 flex flex-col items-center justify-center w-full">
-      {/* Added h-auto or h-full context to let aspect-ratio calculate the bounding box */}
-      <div className="relative overflow-hidden rounded-lg w-full max-w-3xl aspect-[16/9] h-full">
-        <ClientImage
-          src={urlFor(block.image).url()}
-          alt={block.caption || "Blog image"}
-          fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
-          priority={index < 2} // Preloads the image if it's above the fold
-          className="object-cover"
-        />
+    <div key={index} className="flex flex-col w-full">
+      {/* Container class tracking match from your layout configuration */}
+      <div className="relative w-full h-[200px] overflow-hidden max-h-[400px] max-w-4xl mb-10">
+        {isExternalCustomImage ? (
+          <Image
+            src={customSrc}
+            alt={block.caption || "Blog image"}
+            fill
+            className="transition-transform duration-300 group-hover:scale-110 object-contain rounded-xl shadow-xl"
+          />
+        ) : (
+          <ClientImage
+            src={customSrc}
+            alt={block.caption || "Blog image"}
+            fill
+            className="transition-transform duration-300 group-hover:scale-110 object-contain rounded-xl shadow-xl"
+          />
+        )}
       </div>
       {block.caption && (
         <p className="text-sm text-gray-500 mt-2 text-center italic">
@@ -118,10 +145,11 @@ const RenderContentBlock = ({ block, index }: { block: any, index: number }) => 
       )}
     </div>
   );
-    default:
-      return null;
-  }
-};
+}
+        default:
+          return null;
+      }
+    };
   
   const currentUrl = `https://amerandtasheel.com/blogs/${blog.slug}`;
 

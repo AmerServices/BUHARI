@@ -8,66 +8,121 @@ import { FaRegEdit, FaWhatsapp } from 'react-icons/fa';
 import CTAButton from '@/app/components/CTAButton';
 import ServiceFaqs from '@/app/services/[serviceSlug]/components/ServiceFaqs';
 import { blogs } from '@/app/data/blogs';
+import { client } from '@/sanity/lib/client';
+import imageUrlBuilder from '@sanity/image-url';
+import ClientImage from '@/app/components/ClientImage';
 
 interface BlogDetailsProps {
   blog: BlogPost;
 }
 
+const builder = imageUrlBuilder(client);
+function urlFor(source: any) {
+  return builder.image(source);
+}
+
 const BlogDetails: React.FC<BlogDetailsProps> = ({ blog }) => {
 
-  const RenderContentBlock = ({ block, index }: { block: any, index: number }) => {
-    switch (block._type) {
-      case "headingOnly":
-        return (
-          <h2 key={index} className="text-xl md:text-2xl font-bold text-black mb-6 uppercase tracking-tight">
-            {block.text}
-          </h2>
-        );  
-      case "headingParagraph":
-      case "headingList":
-      case "headingParagraphList":
-      case "headingListParagraph":
-        return (
-          <div key={index} className="mb-6">
-            <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
-              {block.heading}
-            </h3>
-            {/* Paragraphs and lists inside these blocks should have standard styling */}
-            {block.text && <p dangerouslySetInnerHTML={{ __html: block.text }} className="text-gray-700 leading-relaxed mb-3"/>}
-            {block.items && (
-              <ul className="list-disc list-inside text-gray-700 space-y-1 ml-2">
-                {block.items.map((item: string, i: number) => <li key={i} dangerouslySetInnerHTML={{ __html: item }}/>)}
-              </ul>
-            )}
-          </div>
-        );
-      case "nestedSection":
-        return (
-          <div key={index} className="my-10">
-            <h4 className="text-lg md:text-xl font-bold text-gray-900 flex items-center gap-2">
-              {block.sectionTitle}
-            </h4>
-            <div className="space-y-4 scale-95">
-              {block.subBlocks?.map((subBlock: any, subIndex: number) => (
-                <RenderContentBlock key={subIndex} block={subBlock} index={subIndex} />
+const RenderContentBlock = ({ block, index }: { block: any, index: number }) => {
+  const linkStyles = "[&_a]:text-blue-600 [&_a]:underline hover:[&_a]:text-blue-800";
+
+  switch (block._type) {
+    case "headingOnly":
+      return (
+        <h2 key={index} className="text-xl md:text-2xl font-bold text-black mb-6 uppercase tracking-tight">
+          {block.text}
+        </h2>
+      );  
+    case "headingParagraph":
+    case "headingList":
+    case "headingParagraphList":
+    case "headingListParagraph":
+      return (
+        <div key={index} className="mb-6">
+          <h3 className="text-lg md:text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
+            {block.heading}
+          </h3>
+          {/* Paragraphs and lists inside these blocks should have standard styling */}
+          {block.text && (
+            <p 
+              dangerouslySetInnerHTML={{ __html: block.text }} 
+              className={`text-gray-700 leading-relaxed mb-3 ${linkStyles}`}
+            />
+          )}
+          {block.items && (
+            <ul className="list-disc list-inside text-gray-700 space-y-1 ml-2">
+              {block.items.map((item: string, i: number) => (
+                <li 
+                  key={i} 
+                  dangerouslySetInnerHTML={{ __html: item }}
+                  className={linkStyles}
+                />
               ))}
-            </div>
+            </ul>
+          )}
+        </div>
+      );
+    case "nestedSection":
+      return (
+        <div key={index} className="my-10">
+          <h4 className="text-lg md:text-xl font-bold text-gray-900 flex items-center gap-2">
+            {block.sectionTitle}
+          </h4>
+          <div className="space-y-4 scale-95">
+            {block.subBlocks?.map((subBlock: any, subIndex: number) => (
+              <RenderContentBlock key={subIndex} block={subBlock} index={subIndex} />
+            ))}
           </div>
-        );
-      case "paragraphOnly":
-        return <p key={index} dangerouslySetInnerHTML={{ __html: block.text }} className="text-gray-700 text-justify mb-6 leading-relaxed"/>;
-      case "listOnly":
-        return (
-          <ul key={index} className="list-disc list-inside text-gray-700 text-base md:text-lg mb-6 space-y-2">
-            {block.items?.map((item: string, i: number) => <li key={i} dangerouslySetInnerHTML={{ __html: item }}/>)}
-          </ul>
-        );
-
-      default:
-        return null;
-    }
-  };
-
+        </div>
+      );
+    case "paragraphOnly":
+      return (
+        <p 
+          key={index} 
+          dangerouslySetInnerHTML={{ __html: block.text }} 
+          className={`text-gray-700 text-justify mb-6 leading-relaxed ${linkStyles}`}
+        />
+      );
+    case "listOnly":
+      return (
+        <ul key={index} className="list-disc list-inside text-gray-700 text-base md:text-lg mb-6 space-y-2">
+          {block.items?.map((item: string, i: number) => (
+            <li 
+              key={i} 
+              dangerouslySetInnerHTML={{ __html: item }}
+              className={linkStyles}
+            />
+          ))}
+        </ul>
+      );
+    case "customImage":
+  if (!block.image) return null;
+  
+  return (
+    <div key={index} className="my-8 flex flex-col items-center justify-center w-full">
+      {/* Added h-auto or h-full context to let aspect-ratio calculate the bounding box */}
+      <div className="relative overflow-hidden rounded-lg w-full max-w-3xl aspect-[16/9] h-full">
+        <ClientImage
+          src={urlFor(block.image).url()}
+          alt={block.caption || "Blog image"}
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+          priority={index < 2} // Preloads the image if it's above the fold
+          className="object-cover"
+        />
+      </div>
+      {block.caption && (
+        <p className="text-sm text-gray-500 mt-2 text-center italic">
+          {block.caption}
+        </p>
+      )}
+    </div>
+  );
+    default:
+      return null;
+  }
+};
+  
   const currentUrl = `https://amerandtasheel.com/blogs/${blog.slug}`;
 
   return (

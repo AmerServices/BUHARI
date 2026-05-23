@@ -52,10 +52,9 @@ const ServiceFaqs: React.FC<ServiceFaqsProps> = ({ faqs }) => {
                 <div
                   className={`mt-2 text-gray-600 text-sm max-w-[95%] origin-top transition-all duration-300 ease-in-out ${
                     isOpen ? 'opacity-100 max-h-96' : 'opacity-0 max-h-0 overflow-hidden'
-                  }`}
-                >
-                  {faq.answer}
-                </div>
+                  } [&_a]:text-blue-600 [&_a]:underline hover:[&_a]:text-blue-800`}
+                  dangerouslySetInnerHTML={{ __html: faq.answer }}
+                />
               </li>
             );
           })}

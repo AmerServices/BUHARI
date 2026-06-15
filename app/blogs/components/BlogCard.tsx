@@ -71,7 +71,7 @@ const BlogPostCard = ({ blog }: { blog: BlogPost }) => {
         </p>
         <div className="flex justify-between items-center text-sm text-gray-500">
           <span>
-            {blogCardText.byLabel} <span className="font-semibold text-gn">{blog.author}</span>
+            {blogCardText.byLabel} <span className="font-semibold text-gn">{blog.author || "Author"}</span>
           </span>
           <span>{formattedDate}</span>
         </div>

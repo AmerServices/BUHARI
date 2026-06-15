@@ -31,6 +31,12 @@ export async function generateMetadata({ params }: BlogPageProps): Promise<Metad
   const fetchedBlog = await client.fetch(`*[_type == "blog"]`); 
   const AllBlogs = [...fetchedBlog, ...blogs];
   const blog = AllBlogs.find((b) => b.slug === slug);
+  const rawKeywords = blog.metaData?.keywords;
+  const parsedKeywords = Array.isArray(rawKeywords)
+    ? rawKeywords
+    : typeof rawKeywords === 'string' && rawKeywords.trim() !== ''
+      ? rawKeywords.split(',').map((k: string) => k.trim())
+      : [];
 
   if (!blog) {
     return {
@@ -41,9 +47,13 @@ export async function generateMetadata({ params }: BlogPageProps): Promise<Metad
   return {
     title: `${blog.metaData?.title}`,
     description: blog.metaData?.description || blog.description,
-    keywords: [ ...['Amer Services blog','Tasheel Services blog','UAE visa tips','Al Buhari Digital',],
-                ...(blog.metaData?.keywords ? blog.metaData.keywords.split(',').map((k: string) => k.trim()) : [])
-              ].join(', '),
+    keywords: [
+      'Amer Services blog',
+      'Tasheel Services blog',
+      'UAE visa tips',
+      'Al Buhari Digital',
+      ...parsedKeywords
+    ].join(', '),
     alternates: {
       canonical: `https://www.amerandtasheel.com/blogs/${blog.slug}`,
       languages: {
